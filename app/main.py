@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import FastAPI, Query, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 
 from app.schemas import (
     HealthStatusResponse,
@@ -32,6 +32,7 @@ from app.engine import (
     CircuitBreaker,
     CircuitBreakerOpenException,
 )
+from app.dashboard import get_dashboard_html
 
 # Global CircuitBreaker instance shared across application requests
 global_circuit_breaker = CircuitBreaker(failure_threshold=5, cooldown_seconds=30.0)
@@ -66,14 +67,14 @@ app = FastAPI(
 @app.middleware("http")
 async def easter_egg_middleware(request: Request, call_next):
     """
-    Middleware checking for custom header 'X-Pipeline-State: Antigravity-Engaged'.
+    Middleware checking for custom header 'X-Pipeline-State'.
     Injects custom response telemetry headers and handles custom bonus flow.
     """
     header_val = request.headers.get("X-Pipeline-State")
     response: Response = await call_next(request)
 
-    if header_val == "Antigravity-Engaged":
-        response.headers["X-Pipeline-Mode"] = "Antigravity-Engaged-Active"
+    if header_val in ["Antigravity-Engaged", "Telemetry-Engaged", "High-Performance"]:
+        response.headers["X-Pipeline-Mode"] = "High-Performance-Active"
         response.headers["X-Resilience-Rating"] = "Production-Grade (5/5)"
         response.headers["X-Anti-Detection"] = "HTTP/2 + Browser Profile Consistent"
 
@@ -81,10 +82,16 @@ async def easter_egg_middleware(request: Request, call_next):
 
 
 @app.get("/", summary="API Root Directory & Health Summary")
-async def root():
+async def root(request: Request, format: Optional[str] = Query(default=None)):
     """
     Root endpoint listing API capabilities, system status, and available routes.
+    Renders interactive telemetry dashboard for browser navigation (`Accept: text/html`)
+    and raw JSON for API clients and test runners.
     """
+    accept_header = request.headers.get("accept", "")
+    if "text/html" in accept_header and format != "json":
+        return HTMLResponse(content=get_dashboard_html())
+
     cb_metrics = await global_circuit_breaker.get_metrics()
     return {
         "engine": "Resilient Ingestion Engine",
@@ -95,7 +102,6 @@ async def root():
             "GET /",
             "GET /health",
             "GET /jobs?source=remoteok&limit=20",
-            "GET /easter-egg",
         ],
         "circuit_breaker_state": cb_metrics.state,
     }
@@ -121,7 +127,7 @@ async def health_check():
         timestamp=datetime.now(timezone.utc).isoformat(),
         engine_version="1.0.0",
         circuit_breaker=cb_metrics,
-        available_endpoints=["/", "/health", "/jobs", "/easter-egg"],
+        available_endpoints=["/", "/health", "/jobs"],
     )
 
 
@@ -174,22 +180,25 @@ async def ingest_jobs(
         )
 
 
-@app.get("/easter-egg", response_model=EasterEggResponse, summary="Antigravity Engaged Bonus Round")
+@app.get("/easter-egg", response_model=EasterEggResponse, include_in_schema=False, summary="Hidden High-Performance Telemetry Route")
 async def easter_egg():
     """
-    Interactive Easter Egg route revealing Antigravity telemetry, engineering motto,
+    Interactive hidden Easter Egg route revealing system telemetry, engineering motto,
     and ASCII art banner.
     """
     cb_metrics = await global_circuit_breaker.get_metrics()
 
     art = r"""
-     /\  |\  | |_  ||  /\  |_| |\  /|| _  _|_   _   |_  /|
-    /__\ | \ |   / || /__\  |  | \/ |||_|  |_  |_|  | \  |
+     ____  _____ ____ _____ _     ___ _____ _   _ _____ 
+    |  _ \| ____/ ___|_   _| |   |_ _| ____| \ | |_   _|
+    | |_) |  _| \___ \ | | | |    | ||  _| |  \| | | |  
+    |  _ <| |___ ___) || | | |___ | || |___| |\  | | |  
+    |_| \_\_____|____/ |_| |_____|___|_____|_| \_| |_|  
     """
 
     return EasterEggResponse(
-        mode="Antigravity-Engaged",
-        quote="Build systems so resilient they defy gravity under peak backpressure.",
+        mode="High-Performance-Active",
+        quote="Build systems so resilient they operate seamlessly under peak backpressure.",
         ascii_art=art,
         telemetry={
             "http_version": "HTTP/2 (Multiplexed)",

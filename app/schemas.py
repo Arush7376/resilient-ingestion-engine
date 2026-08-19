@@ -110,7 +110,9 @@ class JobItem(BaseModel):
         normalized: Dict[str, Any] = {}
 
         # 1. Standardize ID
-        raw_id = data.get("id") or data.get("guid") or data.get("slug")
+        raw_id = data.get("id") or data.get("slug")
+        if not raw_id and "guid" in data and not str(data["guid"]).startswith("http"):
+            raw_id = data["guid"]
         if raw_id:
             normalized["id"] = str(raw_id)
         else:
@@ -142,12 +144,25 @@ class JobItem(BaseModel):
         normalized["location"] = (location or "Remote").strip()
 
         # 5. Standardize Application URL
-        url = data.get("url") or data.get("applicationUrl")
-        if url and isinstance(url, str) and url.startswith("/"):
-            url = f"https://remoteok.com{url}"
-        if not url or not isinstance(url, str):
-            url = f"https://remoteok.com/remote-jobs/{normalized['id']}"
-        normalized["url"] = url.strip()
+        url = (
+            data.get("url")
+            or data.get("applicationUrl")
+            or data.get("applicationLink")
+            or data.get("link")
+        )
+        if not url and isinstance(data.get("guid"), str) and data["guid"].startswith("http"):
+            url = data["guid"]
+
+        if url and isinstance(url, str):
+            if url.startswith("/"):
+                url = f"https://remoteok.com{url}"
+            normalized["url"] = url.strip()
+        else:
+            provider = str(data.get("source") or "RemoteOK").lower()
+            if "himalayas" in provider:
+                normalized["url"] = f"https://himalayas.app/jobs/{normalized['id']}"
+            else:
+                normalized["url"] = f"https://remoteok.com/remote-jobs/{normalized['id']}"
 
         # 6. Standardize Salaries
         def parse_salary(val: Any) -> Optional[int]:
@@ -210,7 +225,7 @@ class EasterEggResponse(BaseModel):
     """
     Interactive response for GET /easter-egg or X-Pipeline-State header trigger.
     """
-    mode: str = Field(default="Antigravity-Engaged", description="Pipeline operation mode")
+    mode: str = Field(default="High-Performance-Active", description="Pipeline operation mode")
     quote: str = Field(..., description="Engineering motto")
-    ascii_art: str = Field(..., description="Antigravity telemetry banner")
+    ascii_art: str = Field(..., description="System telemetry banner")
     telemetry: Dict[str, Any] = Field(..., description="System operational state & resilience features")

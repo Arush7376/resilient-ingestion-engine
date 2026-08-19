@@ -37,7 +37,7 @@ async def test_easter_egg_endpoint():
         response = await ac.get("/easter-egg")
         assert response.status_code == 200
         data = response.json()
-        assert data["mode"] == "Antigravity-Engaged"
+        assert data["mode"] == "High-Performance-Active"
         assert "quote" in data
         assert "ascii_art" in data
 
@@ -45,8 +45,8 @@ async def test_easter_egg_endpoint():
 @pytest.mark.asyncio
 async def test_custom_header_middleware():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        headers = {"X-Pipeline-State": "Antigravity-Engaged"}
+        headers = {"X-Pipeline-State": "Telemetry-Engaged"}
         response = await ac.get("/", headers=headers)
         assert response.status_code == 200
-        assert response.headers.get("X-Pipeline-Mode") == "Antigravity-Engaged-Active"
+        assert response.headers.get("X-Pipeline-Mode") == "High-Performance-Active"
         assert response.headers.get("X-Resilience-Rating") == "Production-Grade (5/5)"

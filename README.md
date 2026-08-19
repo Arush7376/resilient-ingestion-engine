@@ -31,7 +31,6 @@ By combining browser Client Hint profile alignment, an thread-safe Circuit Break
 | `GET` | `/` | API Root directory & system operational overview | None |
 | `GET` | `/health` | Deep diagnostic metrics, circuit breaker state & cooldown counters | None |
 | `GET` | `/jobs` | Triggers resilient live data ingestion pipeline | `source` (default: `"remoteok"`, options: `"remoteok"`, `"himalayas"`), `limit` (e.g. `20`) |
-| `GET` | `/easter-egg` | Interactive Antigravity telemetry bonus route (`X-Pipeline-State` header) | None |
 
 ---
 
@@ -112,4 +111,4 @@ web: uvicorn app.main:app --host 0.0.0.0 --port $PORT
 For complete technical specifications, security analysis, anti-detection details, and trade-off rationales:
 
 - 📖 [**ARCHITECTURE.md**](./ARCHITECTURE.md): Technical Architecture & Resilient Ingestion Specification (WAF Detection Surfaces, HTTP/2 Alignment, Circuit Breaker FSM, Plan B Headless Browser Hydration Tier, Ethical Boundaries).
-- ⚖️ [**DECISIONS.md**](./DECISIONS.md): Architectural Decisions & Trade-off Analysis (Lightweight HTTP/2 vs Headless Browser clusters, 1-Week Production Roadmap, AI Assistance & Manual Engineering Verification).
+- ⚖️ [**DECISIONS.md**](./DECISIONS.md): Architectural Decisions & Trade-off Analysis (Lightweight HTTP/2 vs Headless Browser clusters, 1-Week Production Roadmap, Rapid Scaffolding & Manual Production Hardening).
